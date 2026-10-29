@@ -7,7 +7,7 @@ timestamps and compaction markers. Message contents are never read or printed.
   python agent_cache_cost.py list [--tool claude|codex] [--since ...]
   python agent_cache_cost.py session <id-prefix> [--plot session.png]
 
-Costs are in "input-token equivalents": uncached input 1, cache read 0.1, output 5,
+Token spend is counted in "input-token equivalents": uncached input 1, cache read 0.1, output 5,
 cache write 1.25 (5-minute TTL) or 2.0 (1-hour TTL) for Claude; Codex has no cache-write surcharge.
 """
 import argparse, glob, json, os, statistics as st, subprocess
@@ -186,13 +186,13 @@ def plot(tool, cs, causes, path):
             ax.axvline(i - 0.5, color=INK, linewidth=2, linestyle=(0, (5, 4)))
             ax.text(i + len(cs) * 0.008, max(ys) * 0.98, "компактизация", color=INK, fontsize=18, va="top", rotation=90)
     ax.set_xlim(-1, len(cs))
-    ax.set_ylabel("стоимость, тыс. условных токенов", color=MUTED, fontsize=20)
+    ax.set_ylabel("расход, тыс. условных входных токенов", color=MUTED, fontsize=20)
     ax.set_xlabel("запросы по порядку", color=MUTED, fontsize=20)
     for side in ("top", "right"): ax.spines[side].set_visible(False)
     for side in ("left", "bottom"): ax.spines[side].set_color(GRID)
     ax.tick_params(colors=MUTED, labelsize=19); ax.yaxis.grid(True, color=GRID); ax.set_axisbelow(True)
     name = {"claude": "Claude Code", "codex": "Codex"}[tool]
-    fig.text(0.04, 0.95, f"Сколько стоил каждый запрос\nв моей сессии {name}", fontsize=28, fontweight="bold", color=INK, va="top")
+    fig.text(0.04, 0.95, f"Расход токенов на каждый запрос\nв моей сессии {name}", fontsize=28, fontweight="bold", color=INK, va="top")
     for y, col, label in ((0.80, ORANGE, "после паузы больше часа"), (0.755, BLUE, "обычный запрос"),
                           (0.71, GRAY, "кеш сбросился без паузы")):
         fig.text(0.04, y, "■", color=col, fontsize=24, va="center"); fig.text(0.08, y, label, color=INK, fontsize=22, va="center")
