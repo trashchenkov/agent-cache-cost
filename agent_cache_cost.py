@@ -177,7 +177,7 @@ def plot(tool, cs, causes, path):
     import matplotlib.pyplot as plt
     BLUE, ORANGE, GRAY, INK, MUTED, GRID, BG = "#2a78d6", "#eb6834", "#8f8d86", "#0b0b0b", "#52514e", "#e6e5e1", "#fcfcfb"
     color = {"pause > 1h": ORANGE, "other": GRAY, "model switch": GRAY, "pause 5-60 min": GRAY}
-    plt.rcParams.update({"font.size": 22})
+    plt.rcParams.update({"font.size": 22, "font.family": ["Arial", "DejaVu Sans"]})
     fig, ax = plt.subplots(figsize=(9, 8), dpi=150, facecolor=BG); ax.set_facecolor(BG)
     ys = [c.cost / 1e3 for c in cs]
     ax.bar(range(len(cs)), ys, width=0.9, linewidth=0, color=[color.get(k, BLUE) for k in causes])
@@ -186,7 +186,7 @@ def plot(tool, cs, causes, path):
             ax.axvline(i - 0.5, color=INK, linewidth=2, linestyle=(0, (5, 4)))
             ax.text(i + len(cs) * 0.008, max(ys) * 0.98, "компактизация", color=INK, fontsize=18, va="top", rotation=90)
     ax.set_xlim(-1, len(cs))
-    ax.set_ylabel("расход, тыс. условных входных токенов", color=MUTED, fontsize=20)
+    ax.set_ylabel("тыс. условных входных токенов", color=MUTED, fontsize=20)
     ax.set_xlabel("запросы по порядку", color=MUTED, fontsize=20)
     for side in ("top", "right"): ax.spines[side].set_visible(False)
     for side in ("left", "bottom"): ax.spines[side].set_color(GRID)
