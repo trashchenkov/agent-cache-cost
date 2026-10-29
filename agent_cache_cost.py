@@ -194,7 +194,7 @@ def plot(tool, cs, causes, path):
     name = {"claude": "Claude Code", "codex": "Codex"}[tool]
     fig.text(0.04, 0.95, f"Расход токенов на каждый запрос\nв моей сессии {name}", fontsize=28, fontweight="bold", color=INK, va="top")
     for y, col, label in ((0.80, ORANGE, "после паузы больше часа"), (0.755, BLUE, "обычный запрос"),
-                          (0.71, GRAY, "кеш сбросился без паузы")):
+                          (0.71, GRAY, "кеш сбросился по другой причине")):
         fig.text(0.04, y, "■", color=col, fontsize=24, va="center"); fig.text(0.08, y, label, color=INK, fontsize=22, va="center")
     fig.subplots_adjust(top=0.665, left=0.14, right=0.97, bottom=0.11)
     fig.savefig(path, facecolor=BG); print("saved", path)
