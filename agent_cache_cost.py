@@ -66,7 +66,7 @@ def load_codex():
     for path in files:
         recs = list(records(path))
         new_format = any(r.get("type") == "token_usage_record" for r in recs)
-        streams, comps, seen, model = defaultdict(list), defaultdict(list), set(), None
+        streams, comps, seen, model, root = defaultdict(list), defaultdict(list), set(), None, {}
         fid = os.path.basename(path).split(".")[0][-36:]
         for r in recs:
             p = r.get("payload") if isinstance(r.get("payload"), dict) else {}
@@ -77,6 +77,7 @@ def load_codex():
             if new_format and r.get("type") == "token_usage_record":
                 if p.get("response_id") in seen: continue
                 seen.add(p.get("response_id")); u = p.get("usage") or {}; th = p.get("thread_id") or fid
+                root[th] = p.get("session_id") or th  # subagent threads share the session id of their parent
             elif not new_format and p.get("type") == "token_count" and p.get("info"):
                 u = p["info"].get("last_token_usage") or {}; th = fid
                 key = (u.get("input_tokens"), u.get("cached_input_tokens"), u.get("output_tokens"))
@@ -92,7 +93,8 @@ def load_codex():
             streams[th].append(c)
         for th, cs in streams.items():
             # old-format compaction records carry no thread id and belong to the file's main thread
-            yield "codex", th, cs, comps.get(th, []) + (comps.get(fid, []) if th != fid else [])
+            sess = root.get(th, th)
+            yield "codex", sess + ("" if sess == th else "/" + th), cs, comps.get(th, []) + (comps.get(fid, []) if th != fid else [])
 
 
 def analyse(cs, comp_times):
@@ -138,7 +140,7 @@ def summary(args):
                 if k: by[k] += c.extra; n[k] += 1
         comps = [x for s in ss for x in s[4]]
         sessions = len({s[1].split("/")[0] for s in ss})
-        print(f"\n{tool}: {sessions} sessions, {len(calls)} requests, {len(comps)} compactions, "
+        print(f"\n{tool}: {sessions} sessions ({len(ss)} threads incl. subagents), {len(calls)} requests, {len(comps)} compactions, "
               f"{min(c.t for c in calls):%Y-%m-%d}..{max(c.t for c in calls):%Y-%m-%d}")
         print(f"  requests per compaction: {len(calls) / max(len(comps), 1):.0f}")
         if comps:
@@ -160,7 +162,7 @@ def listing(args):
 
 
 def session(args):
-    found = [s for s in collect(args) if s[1].startswith(args.id)]
+    found = [s for s in collect(args) if s[1].startswith(args.id) or s[1].split("/")[-1].startswith(args.id)]
     if not found: raise SystemExit(f"no session starting with {args.id}")
     tool, sid, cs, causes, comps = max(found, key=lambda s: len(s[2]))
     total = sum(c.cost for c in cs)
